@@ -1,0 +1,66 @@
+<?php
+session_start();
+
+// Kullanıcı girişi yapıldığında bu kod çalışacak
+// Kullanıcı girişi yapmadan add_post sayfasına erişimi engelleme
+if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
+    header("location: login.php"); // Kullanıcı giriş sayfasına yönlendir
+    exit;
+}
+
+// Bu kısım add_post.php dosyanızdaki diğer kodlarınızla devam ediyor
+// ...
+
+
+// Veritabanı bağlantısı için ayarlar
+$db = new SQLite3('database.sqlite');
+
+// Eğer formdan gönderi eklemesi talebi geldiyse
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["add_post"])) {
+    $title = $_POST["title"];
+    $content = $_POST["content"];
+    $date = date("Y-m-d H:i:s");
+
+    // Gönderiyi veritabanına ekle
+    $query = "INSERT INTO blog_posts (title, content, date) VALUES (:title, :content, :date)";
+    $statement = $db->prepare($query);
+    $statement->bindValue(':title', $title, SQLITE3_TEXT);
+    $statement->bindValue(':content', $content, SQLITE3_TEXT);
+    $statement->bindValue(':date', $date, SQLITE3_TEXT);
+
+    if ($statement->execute()) {
+        // Gönderi başarıyla eklendi, admin.php sayfasına yönlendir
+        header("location: admin.php");
+        exit;
+    } else {
+        // Gönderiyi eklerken bir hata oluştu
+        echo "Hata! Gönderi eklenemedi.";
+    }
+}
+?>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gönderi Ekle</title>
+    <!-- CSS veya diğer stil dosyalarını ekleyin -->
+</head>
+<body>
+    <h1>Gönderi Ekle</h1>
+
+    <form action="add_post.php" method="post">
+        <label for="title">Başlık:</label>
+        <input type="text" name="title" required>
+        <br>
+        <label for="content">İçerik:</label>
+        <textarea name="content" required></textarea>
+        <br>
+        <input type="submit" name="add_post" value="Gönderi Ekle">
+    </form>
+
+    <br>
+    <a href="admin.php">Admin Paneline Geri Dön</a>
+
+</body>
+</html>
